@@ -1,0 +1,12 @@
+import { AdminShell } from "@/components/layout/admin-shell";
+import { requireAdminSession } from "@/lib/auth/guards";
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  await requireAdminSession();
+
+  return <AdminShell>{children}</AdminShell>;
+}
