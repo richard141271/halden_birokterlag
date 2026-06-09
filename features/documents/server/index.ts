@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentSiteKey } from "@/lib/cms/site-context";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  assertSupabaseWrite,
+  getSupabaseServerClient,
+  getSupabaseServerClientOrThrow,
+} from "@/lib/supabase/server";
 import { buildStoragePublicUrl } from "@/lib/supabase/storage";
 import { slugify } from "@/lib/utils";
 import type { DocumentRecord } from "@/types/cms";
@@ -70,9 +74,9 @@ export async function uploadDocument(formData: FormData) {
   });
 
   const file = formData.get("file");
-  const client = getSupabaseServerClient();
+  const client = getSupabaseServerClientOrThrow();
 
-  if (client && file instanceof File && file.size > 0) {
+  if (file instanceof File && file.size > 0) {
     const uploaded = await uploadFileToBucket({
       bucket: "documents",
       folder: "documents",
@@ -80,7 +84,7 @@ export async function uploadDocument(formData: FormData) {
     });
 
     if (uploaded) {
-      await client.from("documents").insert({
+      const { error } = await client.from("documents").insert({
         id: crypto.randomUUID(),
         site_key: getCurrentSiteKey(),
         title: parsed.title,
@@ -94,6 +98,8 @@ export async function uploadDocument(formData: FormData) {
         size_bytes: uploaded.sizeBytes,
         is_published: true,
       });
+
+      assertSupabaseWrite(error, "Kunne ikke lagre dokument");
     }
   }
 

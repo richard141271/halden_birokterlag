@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentSiteKey } from "@/lib/cms/site-context";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  assertSupabaseWrite,
+  getSupabaseServerClient,
+  getSupabaseServerClientOrThrow,
+} from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
 import type { EventRecord } from "@/types/cms";
 
@@ -98,25 +102,24 @@ export async function saveEvent(formData: FormData) {
     isPublished: formData.get("is_published") === "on",
   });
 
-  const client = getSupabaseServerClient();
-  if (client) {
-    const siteKey = getCurrentSiteKey();
+  const client = getSupabaseServerClientOrThrow();
+  const siteKey = getCurrentSiteKey();
+  const { error } = await client.from("events").upsert({
+    id: parsed.id || crypto.randomUUID(),
+    site_key: siteKey,
+    slug: slugify(parsed.title),
+    title: parsed.title,
+    summary: parsed.summary || null,
+    body: parsed.body,
+    location: parsed.location || null,
+    starts_at: parsed.startsAt,
+    ends_at: parsed.endsAt || null,
+    all_day: false,
+    registration_url: parsed.registrationUrl || null,
+    is_published: parsed.isPublished ?? false,
+  });
 
-    await client.from("events").upsert({
-      id: parsed.id || crypto.randomUUID(),
-      site_key: siteKey,
-      slug: slugify(parsed.title),
-      title: parsed.title,
-      summary: parsed.summary || null,
-      body: parsed.body,
-      location: parsed.location || null,
-      starts_at: parsed.startsAt,
-      ends_at: parsed.endsAt || null,
-      all_day: false,
-      registration_url: parsed.registrationUrl || null,
-      is_published: parsed.isPublished ?? false,
-    });
-  }
+  assertSupabaseWrite(error, "Kunne ikke lagre arrangement");
 
   revalidatePath("/arrangementer");
   revalidatePath("/admin/events");
@@ -125,10 +128,11 @@ export async function saveEvent(formData: FormData) {
 
 export async function deleteEvent(formData: FormData) {
   const id = String(formData.get("id") || "");
-  const client = getSupabaseServerClient();
+  const client = getSupabaseServerClientOrThrow();
 
-  if (client && id) {
-    await client.from("events").delete().eq("id", id);
+  if (id) {
+    const { error } = await client.from("events").delete().eq("id", id);
+    assertSupabaseWrite(error, "Kunne ikke slette arrangement");
   }
 
   revalidatePath("/arrangementer");

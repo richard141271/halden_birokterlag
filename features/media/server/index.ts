@@ -1,7 +1,11 @@
 "use server";
 
 import { getCurrentSiteKey } from "@/lib/cms/site-context";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  assertSupabaseWrite,
+  getSupabaseServerClient,
+  getSupabaseServerClientOrThrow,
+} from "@/lib/supabase/server";
 
 type UploadOptions = {
   bucket: string;
@@ -14,8 +18,9 @@ export async function uploadFileToBucket({
   folder,
   file,
 }: UploadOptions) {
-  const client = getSupabaseServerClient();
-  if (!client || !file.size) {
+  const client = getSupabaseServerClientOrThrow();
+
+  if (!file.size) {
     return null;
   }
 
@@ -30,9 +35,7 @@ export async function uploadFileToBucket({
     upsert: false,
   });
 
-  if (error) {
-    throw error;
-  }
+  assertSupabaseWrite(error, "Kunne ikke laste opp fil til storage");
 
   return {
     bucket,
@@ -52,5 +55,6 @@ export async function deleteFileFromBucket(
     return;
   }
 
-  await client.storage.from(bucket).remove([storagePath]);
+  const { error } = await client.storage.from(bucket).remove([storagePath]);
+  assertSupabaseWrite(error, "Kunne ikke slette fil fra storage");
 }

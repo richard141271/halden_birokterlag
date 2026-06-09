@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentSiteKey } from "@/lib/cms/site-context";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  assertSupabaseWrite,
+  getSupabaseServerClient,
+  getSupabaseServerClientOrThrow,
+} from "@/lib/supabase/server";
 import { buildStoragePublicUrl } from "@/lib/supabase/storage";
 import { slugify } from "@/lib/utils";
 import type { AlbumRecord, ImageRecord } from "@/types/cms";
@@ -126,18 +130,18 @@ export async function createAlbum(formData: FormData) {
     description: String(formData.get("description") || ""),
   });
 
-  const client = getSupabaseServerClient();
-  if (client) {
-    await client.from("albums").insert({
-      id: crypto.randomUUID(),
-      site_key: getCurrentSiteKey(),
-      slug: slugify(parsed.title),
-      title: parsed.title,
-      description: parsed.description || null,
-      is_published: true,
-      sort_order: 0,
-    });
-  }
+  const client = getSupabaseServerClientOrThrow();
+  const { error } = await client.from("albums").insert({
+    id: crypto.randomUUID(),
+    site_key: getCurrentSiteKey(),
+    slug: slugify(parsed.title),
+    title: parsed.title,
+    description: parsed.description || null,
+    is_published: true,
+    sort_order: 0,
+  });
+
+  assertSupabaseWrite(error, "Kunne ikke opprette album");
 
   revalidatePath("/galleri");
   revalidatePath("/admin/gallery");
@@ -145,13 +149,13 @@ export async function createAlbum(formData: FormData) {
 }
 
 export async function uploadImage(formData: FormData) {
-  const client = getSupabaseServerClient();
+  const client = getSupabaseServerClientOrThrow();
   const file = formData.get("file");
   const albumId = String(formData.get("album_id") || "");
   const altText = String(formData.get("alt_text") || "");
   const caption = String(formData.get("caption") || "");
 
-  if (client && file instanceof File && file.size > 0) {
+  if (file instanceof File && file.size > 0) {
     const uploaded = await uploadFileToBucket({
       bucket: "media",
       folder: "gallery",
@@ -159,7 +163,7 @@ export async function uploadImage(formData: FormData) {
     });
 
     if (uploaded) {
-      await client.from("images").insert({
+      const { error } = await client.from("images").insert({
         id: crypto.randomUUID(),
         site_key: getCurrentSiteKey(),
         album_id: albumId || null,
@@ -173,6 +177,8 @@ export async function uploadImage(formData: FormData) {
         sort_order: 0,
         is_published: true,
       });
+
+      assertSupabaseWrite(error, "Kunne ikke lagre bilde");
     }
   }
 
@@ -185,10 +191,11 @@ export async function deleteImage(formData: FormData) {
   const id = String(formData.get("id") || "");
   const bucket = String(formData.get("bucket") || "");
   const storagePath = String(formData.get("storage_path") || "");
-  const client = getSupabaseServerClient();
+  const client = getSupabaseServerClientOrThrow();
 
-  if (client && id) {
-    await client.from("images").delete().eq("id", id);
+  if (id) {
+    const { error } = await client.from("images").delete().eq("id", id);
+    assertSupabaseWrite(error, "Kunne ikke slette bilde");
     await deleteFileFromBucket(bucket, storagePath);
   }
 

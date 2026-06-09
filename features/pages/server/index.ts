@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentSiteKey } from "@/lib/cms/site-context";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  assertSupabaseWrite,
+  getSupabaseServerClient,
+  getSupabaseServerClientOrThrow,
+} from "@/lib/supabase/server";
 import type { PageRecord } from "@/types/cms";
 
 const pageSchema = z.object({
@@ -134,24 +138,23 @@ export async function savePage(formData: FormData) {
     showInNav: formData.get("show_in_nav") === "on",
   });
 
-  const client = getSupabaseServerClient();
-  if (client) {
-    const siteKey = getCurrentSiteKey();
+  const client = getSupabaseServerClientOrThrow();
+  const siteKey = getCurrentSiteKey();
+  const { error } = await client.from("pages").upsert({
+    id: parsed.id || crypto.randomUUID(),
+    site_key: siteKey,
+    slug: parsed.slug,
+    title: parsed.title,
+    page_type: "static",
+    excerpt: parsed.excerpt || null,
+    body: parsed.body,
+    is_homepage: parsed.isHomePage ?? false,
+    is_published: parsed.isPublished ?? false,
+    show_in_nav: parsed.showInNav ?? false,
+    nav_order: 0,
+  });
 
-    await client.from("pages").upsert({
-      id: parsed.id || crypto.randomUUID(),
-      site_key: siteKey,
-      slug: parsed.slug,
-      title: parsed.title,
-      page_type: "static",
-      excerpt: parsed.excerpt || null,
-      body: parsed.body,
-      is_homepage: parsed.isHomePage ?? false,
-      is_published: parsed.isPublished ?? false,
-      show_in_nav: parsed.showInNav ?? false,
-      nav_order: 0,
-    });
-  }
+  assertSupabaseWrite(error, "Kunne ikke lagre side");
 
   revalidatePath("/");
   revalidatePath("/om-oss");

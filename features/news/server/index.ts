@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentSiteKey } from "@/lib/cms/site-context";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  assertSupabaseWrite,
+  getSupabaseServerClient,
+  getSupabaseServerClientOrThrow,
+} from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
 import type { NewsRecord } from "@/types/cms";
 
@@ -89,22 +93,21 @@ export async function saveNews(formData: FormData) {
     isPublished: formData.get("is_published") === "on",
   });
 
-  const client = getSupabaseServerClient();
-  if (client) {
-    const siteKey = getCurrentSiteKey();
+  const client = getSupabaseServerClientOrThrow();
+  const siteKey = getCurrentSiteKey();
+  const { error } = await client.from("news").upsert({
+    id: parsed.id || crypto.randomUUID(),
+    site_key: siteKey,
+    slug: slugify(parsed.title),
+    title: parsed.title,
+    summary: parsed.summary || null,
+    body: parsed.body,
+    author_name: parsed.authorName || "Admin",
+    is_published: parsed.isPublished ?? false,
+    published_at: parsed.isPublished ? new Date().toISOString() : null,
+  });
 
-    await client.from("news").upsert({
-      id: parsed.id || crypto.randomUUID(),
-      site_key: siteKey,
-      slug: slugify(parsed.title),
-      title: parsed.title,
-      summary: parsed.summary || null,
-      body: parsed.body,
-      author_name: parsed.authorName || "Admin",
-      is_published: parsed.isPublished ?? false,
-      published_at: parsed.isPublished ? new Date().toISOString() : null,
-    });
-  }
+  assertSupabaseWrite(error, "Kunne ikke lagre nyhet");
 
   revalidatePath("/nyheter");
   revalidatePath("/admin/news");
@@ -113,10 +116,11 @@ export async function saveNews(formData: FormData) {
 
 export async function deleteNews(formData: FormData) {
   const id = String(formData.get("id") || "");
-  const client = getSupabaseServerClient();
+  const client = getSupabaseServerClientOrThrow();
 
-  if (client && id) {
-    await client.from("news").delete().eq("id", id);
+  if (id) {
+    const { error } = await client.from("news").delete().eq("id", id);
+    assertSupabaseWrite(error, "Kunne ikke slette nyhet");
   }
 
   revalidatePath("/nyheter");

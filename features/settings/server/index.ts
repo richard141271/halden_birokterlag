@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentSiteKey } from "@/lib/cms/site-context";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  assertSupabaseWrite,
+  getSupabaseServerClient,
+  getSupabaseServerClientOrThrow,
+} from "@/lib/supabase/server";
 
 const defaultSettings = {
   site_name: "KIAS CMS",
@@ -44,7 +48,7 @@ export async function getAdminSettings() {
 }
 
 export async function saveSettings(formData: FormData) {
-  const client = getSupabaseServerClient();
+  const client = getSupabaseServerClientOrThrow();
   const siteKey = getCurrentSiteKey();
   const entries = [
     "site_name",
@@ -56,11 +60,10 @@ export async function saveSettings(formData: FormData) {
     "instagram_url",
   ];
 
-  if (client) {
-    await Promise.all(
-      entries.map((key) =>
-        client.from("settings").upsert({
-          id: crypto.randomUUID(),
+  const results = await Promise.all(
+    entries.map((key) =>
+      client.from("settings").upsert(
+        {
           site_key: siteKey,
           key,
           value: String(formData.get(key) || ""),
@@ -68,9 +71,16 @@ export async function saveSettings(formData: FormData) {
           group_name: "general",
           label: key,
           is_public: true,
-        }),
+        },
+        {
+          onConflict: "site_key,key",
+        },
       ),
-    );
+    ),
+  );
+
+  for (const result of results) {
+    assertSupabaseWrite(result.error, "Kunne ikke lagre innstillinger");
   }
 
   revalidatePath("/");
