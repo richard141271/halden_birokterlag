@@ -19,7 +19,7 @@ export function getSupabaseServerClientOrThrow() {
 
   if (!client) {
     throw new Error(
-      "Supabase server mangler oppsett. Sett SUPABASE_SERVICE_ROLE_KEY i .env.local og i Vercel.",
+      "Supabase server mangler oppsett. Kontroller at NEXT_PUBLIC_SUPABASE_URL og SUPABASE_SERVICE_ROLE_KEY er satt i aktivt miljo.",
     );
   }
 
