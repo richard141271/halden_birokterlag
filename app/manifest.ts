@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "KIAS CMS",
-    short_name: "KIAS",
+    name: "LEK-Systemet™ CMS",
+    short_name: "LEK",
     description: "Modulært CMS med Next.js, Supabase og Vercel.",
     start_url: "/",
     display: "standalone",

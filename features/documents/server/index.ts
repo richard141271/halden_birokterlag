@@ -10,7 +10,7 @@ import {
   getSupabaseServerClientOrThrow,
 } from "@/lib/supabase/server";
 import { buildStoragePublicUrl } from "@/lib/supabase/storage";
-import { slugify } from "@/lib/utils";
+import { isUuid, slugify } from "@/lib/utils";
 import type { DocumentRecord } from "@/types/cms";
 import { uploadFileToBucket } from "@/features/media/server";
 
@@ -63,7 +63,9 @@ export async function getAdminDocuments() {
 
   return docs.map((doc) => ({
     ...doc,
-    publicUrl: buildStoragePublicUrl(doc.bucket, doc.storage_path),
+    publicUrl: isUuid(doc.id)
+      ? buildStoragePublicUrl(doc.bucket, doc.storage_path)
+      : "",
   }));
 }
 

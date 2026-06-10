@@ -10,7 +10,7 @@ import {
 } from "@/lib/supabase/server";
 
 const defaultSettings = {
-  site_name: "KIAS CMS",
+  site_name: "LEK-Systemet™ CMS",
   logo: "",
   contact_email: "kontakt@example.no",
   phone: "+47 00 00 00 00",

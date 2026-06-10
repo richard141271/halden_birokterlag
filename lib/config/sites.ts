@@ -1,7 +1,7 @@
 export const siteRegistry = {
   default: {
     key: "default",
-    name: "KIAS CMS",
+    name: "LEK-Systemet™ CMS",
     description:
       "Gjenbrukbart CMS for organisasjoner, lag og framtidige multisite-oppsett.",
   },

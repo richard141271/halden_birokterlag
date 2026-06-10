@@ -20,6 +20,9 @@ export default async function AdminGalleryPage() {
         <p className="mt-2 text-slate-600">
           Opprett album, last opp bilder og fjern media ved behov.
         </p>
+        <p className="mt-1 text-sm text-slate-500">
+          Bucketen som brukes for bilder er <span className="font-medium">media</span>.
+        </p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -49,12 +52,19 @@ export default async function AdminGalleryPage() {
           <CardContent>
             <form action={uploadImage} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="album_id">Album-ID</Label>
-                <Input
+                <Label htmlFor="album_id">Album</Label>
+                <select
                   id="album_id"
                   name="album_id"
-                  placeholder={gallery[0]?.album.id || "album-id"}
-                />
+                  className="flex h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-900"
+                  defaultValue={gallery[0]?.album.id || ""}
+                >
+                  {gallery.map(({ album }) => (
+                    <option key={album.id} value={album.id}>
+                      {album.title}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="alt_text">Alt-tekst</Label>

@@ -27,7 +27,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <aside className="rounded-3xl bg-slate-950 p-5 text-white">
           <div className="mb-8">
             <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-              KIAS CMS
+              LEK-Systemet™ CMS
             </p>
             <h2 className="mt-2 text-2xl font-semibold">Admin</h2>
           </div>

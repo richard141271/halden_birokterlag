@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "KIAS CMS",
-  description: "Modulært og gjenbrukbart CMS bygget med Next.js og Supabase.",
+  title: "LEK-Systemet™ CMS",
+  description:
+    "Modulært og gjenbrukbart CMS bygget med Next.js, Supabase og Vercel.",
 };
 
 export default function RootLayout({

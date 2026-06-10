@@ -22,7 +22,7 @@ export function SiteHeader() {
           <Link href="/" className="text-lg font-semibold text-slate-950">
             {site.name}
           </Link>
-          <p className="text-sm text-slate-500">KIAS CMS</p>
+          <p className="text-sm text-slate-500">LEK-Systemet™ CMS</p>
         </div>
         <nav className="hidden items-center gap-5 text-sm text-slate-600 lg:flex">
           {links.map((link) => (

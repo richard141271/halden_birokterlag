@@ -1,9 +1,12 @@
-import { env } from "@/lib/config/env";
-
 export function buildStoragePublicUrl(bucket: string, storagePath: string) {
-  if (!env.supabaseUrl) {
+  if (!bucket || !storagePath) {
     return "";
   }
 
-  return `${env.supabaseUrl}/storage/v1/object/public/${bucket}/${storagePath}`;
+  const encodedPath = storagePath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+  return `/media/${encodeURIComponent(bucket)}/${encodedPath}`;
 }

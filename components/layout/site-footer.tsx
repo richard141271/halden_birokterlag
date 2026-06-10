@@ -8,8 +8,8 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-slate-500 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <p>
-            KIAS CMS er laget for gjenbrukbare organisasjonsnettsteder med
-            Supabase som datalag.
+            LEK-Systemet™ CMS er laget for gjenbrukbare organisasjonsnettsteder
+            med Supabase som datalag.
           </p>
           <div className="flex gap-4">
             <Link href="/kontakt">Kontakt</Link>

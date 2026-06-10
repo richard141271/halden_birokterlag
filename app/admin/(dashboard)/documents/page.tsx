@@ -15,6 +15,9 @@ export default async function AdminDocumentsPage() {
         <p className="mt-2 text-slate-600">
           Last opp PDF-er og organiser dem i mapper.
         </p>
+        <p className="mt-1 text-sm text-slate-500">
+          Bucketen som brukes for dokumenter er <span className="font-medium">documents</span>.
+        </p>
       </div>
 
       <Card>

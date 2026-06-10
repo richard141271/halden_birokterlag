@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { buildStoragePublicUrl } from "@/lib/supabase/storage";
+import { isUuid } from "@/lib/utils";
 import { getPublishedDocuments } from "@/features/documents/server";
 
 export default async function DocumentsPage() {
@@ -29,13 +30,19 @@ export default async function DocumentsPage() {
                 <p>{doc.description}</p>
                 <p>Mappe: {doc.folder_path}</p>
               </div>
-              <Link
-                href={buildStoragePublicUrl(doc.bucket, doc.storage_path) || "#"}
-                className="font-medium text-slate-900"
-                target="_blank"
-              >
-                Åpne dokument
-              </Link>
+              {isUuid(doc.id) ? (
+                <Link
+                  href={buildStoragePublicUrl(doc.bucket, doc.storage_path) || "#"}
+                  className="font-medium text-slate-900"
+                  target="_blank"
+                >
+                  Åpne dokument
+                </Link>
+              ) : (
+                <span className="font-medium text-slate-400">
+                  Eksempeldokument
+                </span>
+              )}
             </CardContent>
           </Card>
         ))}

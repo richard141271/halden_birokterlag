@@ -1,6 +1,6 @@
-# KIAS CMS
+# LEK-Systemet(TM) CMS
 
-KIAS CMS er et modulært og gjenbrukbart grunnlag for organisasjonsnettsteder bygget med `Next.js 15`, `TypeScript`, `Tailwind CSS`, `Supabase` og `Vercel`.
+LEK-Systemet(TM) CMS er et modulært og gjenbrukbart grunnlag for organisasjonsnettsteder bygget med `Next.js 15`, `TypeScript`, `Tailwind CSS`, `Supabase` og `Vercel`.
 
 ## Teknologistakk
 

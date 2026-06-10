@@ -41,8 +41,8 @@ export default async function HomePage() {
               <CardTitle>{item}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
-              KIAS CMS er laget for å kunne gjenbrukes på mange nettsteder med
-              minimale kodeendringer.
+              LEK-Systemet™ CMS er laget for å kunne gjenbrukes på mange
+              nettsteder med minimale kodeendringer.
             </CardContent>
           </Card>
         ))}
