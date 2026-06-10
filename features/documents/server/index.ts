@@ -54,7 +54,8 @@ export async function getPublishedDocuments() {
     .eq("is_published", true)
     .order("folder_path", { ascending: true });
 
-  return (data as DocumentRecord[] | null) ?? defaultDocuments;
+  const rows = (data as DocumentRecord[] | null) ?? [];
+  return rows.length ? rows : defaultDocuments;
 }
 
 export async function getAdminDocuments() {

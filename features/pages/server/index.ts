@@ -92,7 +92,8 @@ export async function getPublicPages() {
     .eq("is_published", true)
     .order("nav_order", { ascending: true });
 
-  return (data as PageRecord[] | null) ?? defaultPages;
+  const rows = (data as PageRecord[] | null) ?? [];
+  return rows.length ? rows : defaultPages;
 }
 
 export async function getHomepage() {
@@ -119,7 +120,8 @@ export async function getEditablePages() {
     .eq("site_key", siteKey)
     .order("nav_order", { ascending: true });
 
-  return (data as PageRecord[] | null) ?? defaultPages;
+  const rows = (data as PageRecord[] | null) ?? [];
+  return rows.length ? rows : defaultPages;
 }
 
 export async function getPageByIdOrSlug(value: string) {

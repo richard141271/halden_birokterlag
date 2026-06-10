@@ -53,7 +53,8 @@ export async function getPublishedNews() {
     .eq("is_published", true)
     .order("published_at", { ascending: false });
 
-  return (data as NewsRecord[] | null) ?? defaultNews;
+  const rows = (data as NewsRecord[] | null) ?? [];
+  return rows.length ? rows : defaultNews;
 }
 
 export async function getNewsBySlug(slug: string) {
@@ -75,7 +76,8 @@ export async function getAdminNews() {
     .eq("site_key", siteKey)
     .order("created_at", { ascending: false });
 
-  return (data as NewsRecord[] | null) ?? defaultNews;
+  const rows = (data as NewsRecord[] | null) ?? [];
+  return rows.length ? rows : defaultNews;
 }
 
 export async function getNewsById(id: string) {

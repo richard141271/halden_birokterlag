@@ -74,7 +74,8 @@ export async function getPublishedAlbums() {
     .eq("is_published", true)
     .order("sort_order", { ascending: true });
 
-  return (data as AlbumRecord[] | null) ?? defaultAlbums;
+  const rows = (data as AlbumRecord[] | null) ?? [];
+  return rows.length ? rows : defaultAlbums;
 }
 
 export async function getAlbumBySlug(slug: string) {
@@ -106,7 +107,13 @@ export async function getImagesForAlbum(albumId: string) {
     .eq("album_id", albumId)
     .order("sort_order", { ascending: true });
 
-  return ((data as ImageRecord[] | null) ?? []).map((image) => ({
+  const rows = (data as ImageRecord[] | null) ?? [];
+
+  if (!rows.length) {
+    return defaultImages.filter((image) => image.album_id === albumId);
+  }
+
+  return rows.map((image) => ({
     ...image,
     public_url: buildStoragePublicUrl(image.bucket, image.storage_path),
   }));

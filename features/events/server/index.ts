@@ -59,7 +59,8 @@ export async function getPublishedEvents() {
     .eq("is_published", true)
     .order("starts_at", { ascending: true });
 
-  return (data as EventRecord[] | null) ?? defaultEvents;
+  const rows = (data as EventRecord[] | null) ?? [];
+  return rows.length ? rows : defaultEvents;
 }
 
 export async function getEventBySlug(slug: string) {
@@ -81,7 +82,8 @@ export async function getAdminEvents() {
     .eq("site_key", siteKey)
     .order("starts_at", { ascending: true });
 
-  return (data as EventRecord[] | null) ?? defaultEvents;
+  const rows = (data as EventRecord[] | null) ?? [];
+  return rows.length ? rows : defaultEvents;
 }
 
 export async function getEventById(id: string) {
