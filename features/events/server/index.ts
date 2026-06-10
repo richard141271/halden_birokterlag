@@ -9,7 +9,7 @@ import {
   getSupabaseServerClient,
   getSupabaseServerClientOrThrow,
 } from "@/lib/supabase/server";
-import { slugify } from "@/lib/utils";
+import { isUuid, slugify } from "@/lib/utils";
 import type { EventRecord } from "@/types/cms";
 
 const eventSchema = z.object({
@@ -104,8 +104,9 @@ export async function saveEvent(formData: FormData) {
 
   const client = getSupabaseServerClientOrThrow();
   const siteKey = getCurrentSiteKey();
+  const id = isUuid(parsed.id || "") ? parsed.id : crypto.randomUUID();
   const { error } = await client.from("events").upsert({
-    id: parsed.id || crypto.randomUUID(),
+    id,
     site_key: siteKey,
     slug: slugify(parsed.title),
     title: parsed.title,

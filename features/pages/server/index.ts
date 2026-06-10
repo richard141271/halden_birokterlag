@@ -9,6 +9,7 @@ import {
   getSupabaseServerClient,
   getSupabaseServerClientOrThrow,
 } from "@/lib/supabase/server";
+import { isUuid } from "@/lib/utils";
 import type { PageRecord } from "@/types/cms";
 
 const pageSchema = z.object({
@@ -140,8 +141,9 @@ export async function savePage(formData: FormData) {
 
   const client = getSupabaseServerClientOrThrow();
   const siteKey = getCurrentSiteKey();
+  const id = isUuid(parsed.id || "") ? parsed.id : crypto.randomUUID();
   const { error } = await client.from("pages").upsert({
-    id: parsed.id || crypto.randomUUID(),
+    id,
     site_key: siteKey,
     slug: parsed.slug,
     title: parsed.title,
