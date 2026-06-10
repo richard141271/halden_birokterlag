@@ -77,12 +77,32 @@ const defaultPages: PageRecord[] = [
   },
 ];
 
+function getDefaultPages(siteKey: string) {
+  return defaultPages.map((page) => ({
+    ...page,
+    site_key: siteKey,
+  }));
+}
+
+function mergePagesWithDefaults(rows: PageRecord[], siteKey: string) {
+  const merged = new Map(
+    getDefaultPages(siteKey).map((page) => [page.slug, page] as const),
+  );
+
+  for (const row of rows) {
+    const fallback = merged.get(row.slug);
+    merged.set(row.slug, fallback ? { ...fallback, ...row } : row);
+  }
+
+  return [...merged.values()].sort((a, b) => a.nav_order - b.nav_order);
+}
+
 export async function getPublicPages() {
   const client = getSupabaseServerClient();
   const siteKey = getCurrentSiteKey();
 
   if (!client) {
-    return defaultPages;
+    return getDefaultPages(siteKey);
   }
 
   const { data } = await client
@@ -93,7 +113,7 @@ export async function getPublicPages() {
     .order("nav_order", { ascending: true });
 
   const rows = (data as PageRecord[] | null) ?? [];
-  return rows.length ? rows : defaultPages;
+  return mergePagesWithDefaults(rows, siteKey).filter((page) => page.is_published);
 }
 
 export async function getHomepage() {
@@ -111,7 +131,7 @@ export async function getEditablePages() {
   const siteKey = getCurrentSiteKey();
 
   if (!client) {
-    return defaultPages;
+    return getDefaultPages(siteKey);
   }
 
   const { data } = await client
@@ -121,7 +141,7 @@ export async function getEditablePages() {
     .order("nav_order", { ascending: true });
 
   const rows = (data as PageRecord[] | null) ?? [];
-  return rows.length ? rows : defaultPages;
+  return mergePagesWithDefaults(rows, siteKey);
 }
 
 export async function getPageByIdOrSlug(value: string) {
@@ -143,7 +163,22 @@ export async function savePage(formData: FormData) {
 
   const client = getSupabaseServerClientOrThrow();
   const siteKey = getCurrentSiteKey();
-  const id = isUuid(parsed.id || "") ? parsed.id : crypto.randomUUID();
+  const defaultPage = getDefaultPages(siteKey).find(
+    (page) => page.slug === parsed.slug,
+  );
+  let id = isUuid(parsed.id || "") ? parsed.id : "";
+
+  if (!id) {
+    const { data } = await client
+      .from("pages")
+      .select("id")
+      .eq("site_key", siteKey)
+      .eq("slug", parsed.slug)
+      .maybeSingle();
+
+    id = data?.id ?? crypto.randomUUID();
+  }
+
   const { error } = await client.from("pages").upsert({
     id,
     site_key: siteKey,
@@ -155,7 +190,7 @@ export async function savePage(formData: FormData) {
     is_homepage: parsed.isHomePage ?? false,
     is_published: parsed.isPublished ?? false,
     show_in_nav: parsed.showInNav ?? false,
-    nav_order: 0,
+    nav_order: defaultPage?.nav_order ?? 0,
   });
 
   assertSupabaseWrite(error, "Kunne ikke lagre side");
