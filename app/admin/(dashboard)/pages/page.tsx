@@ -22,7 +22,12 @@ export default async function AdminPagesPage() {
             </CardHeader>
             <CardContent className="flex items-center justify-between text-sm text-slate-600">
               <p>Slug: /{page.slug === "forside" ? "" : page.slug}</p>
-              <Button asChild variant="outline" size="sm">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+              >
                 <Link href={`/admin/pages/${page.id}`}>Rediger</Link>
               </Button>
             </CardContent>

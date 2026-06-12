@@ -10,7 +10,7 @@ import {
   getSupabaseServerClientOrThrow,
 } from "@/lib/supabase/server";
 import { buildStoragePublicUrl } from "@/lib/supabase/storage";
-import { slugify } from "@/lib/utils";
+import { isUuid, slugify } from "@/lib/utils";
 import type { AlbumRecord, ImageRecord } from "@/types/cms";
 import {
   deleteFileFromBucket,
@@ -75,7 +75,7 @@ export async function getPublishedAlbums() {
     .order("sort_order", { ascending: true });
 
   const rows = (data as AlbumRecord[] | null) ?? [];
-  return rows.length ? rows : defaultAlbums;
+  return rows;
 }
 
 export async function getAlbumBySlug(slug: string) {
@@ -100,6 +100,10 @@ export async function getImagesForAlbum(albumId: string) {
     return defaultImages.filter((image) => image.album_id === albumId);
   }
 
+  if (!isUuid(albumId)) {
+    return [];
+  }
+
   const { data } = await client
     .from("images")
     .select("*")
@@ -108,11 +112,6 @@ export async function getImagesForAlbum(albumId: string) {
     .order("sort_order", { ascending: true });
 
   const rows = (data as ImageRecord[] | null) ?? [];
-
-  if (!rows.length) {
-    return defaultImages.filter((image) => image.album_id === albumId);
-  }
-
   return rows.map((image) => ({
     ...image,
     public_url: buildStoragePublicUrl(image.bucket, image.storage_path),
@@ -157,12 +156,35 @@ export async function createAlbum(formData: FormData) {
 
 export async function uploadImage(formData: FormData) {
   const client = getSupabaseServerClientOrThrow();
-  const file = formData.get("file");
   const albumId = String(formData.get("album_id") || "");
   const altText = String(formData.get("alt_text") || "");
   const caption = String(formData.get("caption") || "");
+  const files = [
+    ...formData
+      .getAll("files")
+      .filter((value): value is File => value instanceof File && value.size > 0),
+    ...formData
+      .getAll("file")
+      .filter((value): value is File => value instanceof File && value.size > 0),
+  ].slice(0, 6);
 
-  if (file instanceof File && file.size > 0) {
+  if (!isUuid(albumId)) {
+    throw new Error("Du må opprette og velge et gyldig album før du laster opp bilder.");
+  }
+
+  if (!files.length) {
+    throw new Error("Velg minst ett bilde for opplasting.");
+  }
+
+  const { count } = await client
+    .from("images")
+    .select("*", { count: "exact", head: true })
+    .eq("site_key", getCurrentSiteKey())
+    .eq("album_id", albumId);
+
+  let sortOrder = count ?? 0;
+
+  for (const file of files) {
     const uploaded = await uploadFileToBucket({
       bucket: "media",
       folder: "gallery",
@@ -173,7 +195,7 @@ export async function uploadImage(formData: FormData) {
       const { error } = await client.from("images").insert({
         id: crypto.randomUUID(),
         site_key: getCurrentSiteKey(),
-        album_id: albumId || null,
+        album_id: albumId,
         bucket: uploaded.bucket,
         storage_path: uploaded.storagePath,
         file_name: uploaded.fileName,
@@ -181,11 +203,12 @@ export async function uploadImage(formData: FormData) {
         alt_text: altText || null,
         caption: caption || null,
         size_bytes: uploaded.sizeBytes,
-        sort_order: 0,
+        sort_order: sortOrder,
         is_published: true,
       });
 
       assertSupabaseWrite(error, "Kunne ikke lagre bilde");
+      sortOrder += 1;
     }
   }
 

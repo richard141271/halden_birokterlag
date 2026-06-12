@@ -17,7 +17,7 @@ export default async function AdminEventsPage() {
             Opprett, rediger og slett arrangementer.
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-slate-950 text-white hover:bg-slate-800">
           <Link href="/admin/events/new">Nytt arrangement</Link>
         </Button>
       </div>
@@ -31,7 +31,12 @@ export default async function AdminEventsPage() {
             <CardContent className="flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
               <p>{item.location}</p>
               <div className="flex gap-2">
-                <Button asChild variant="outline" size="sm">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+                >
                   <Link href={`/admin/events/${item.id}`}>Rediger</Link>
                 </Button>
                 <form action={deleteEvent}>

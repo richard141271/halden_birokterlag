@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,45 +48,61 @@ export default async function AdminGalleryPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Last opp bilde</CardTitle>
+            <CardTitle>Last opp bilder</CardTitle>
           </CardHeader>
           <CardContent>
-            <form action={uploadImage} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="album_id">Album</Label>
-                <select
-                  id="album_id"
-                  name="album_id"
-                  className="flex h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-900"
-                  defaultValue={gallery[0]?.album.id || ""}
-                >
-                  {gallery.map(({ album }) => (
-                    <option key={album.id} value={album.id}>
-                      {album.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="alt_text">Alt-tekst</Label>
-                <Input id="alt_text" name="alt_text" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="caption">Bildetekst</Label>
-                <Textarea id="caption" name="caption" className="min-h-24" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="file">Bildefil</Label>
-                <Input id="file" name="file" type="file" accept="image/*" />
-              </div>
-              <Button type="submit">Last opp bilde</Button>
-            </form>
+            {gallery.length ? (
+              <form action={uploadImage} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="album_id">Album</Label>
+                  <select
+                    id="album_id"
+                    name="album_id"
+                    className="flex h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-900"
+                    defaultValue={gallery[0]?.album.id || ""}
+                  >
+                    {gallery.map(({ album }) => (
+                      <option key={album.id} value={album.id}>
+                        {album.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="alt_text">Alt-tekst</Label>
+                  <Input id="alt_text" name="alt_text" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="caption">Bildetekst</Label>
+                  <Textarea id="caption" name="caption" className="min-h-24" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="files">Bildefiler</Label>
+                  <Input
+                    id="files"
+                    name="files"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                  />
+                  <p className="text-xs text-slate-500">
+                    Du kan laste opp opptil 6 bilder per opplasting.
+                  </p>
+                </div>
+                <Button type="submit">Last opp bilder</Button>
+              </form>
+            ) : (
+              <EmptyState
+                title="Opprett album først"
+                description="Galleri-opplasting krever minst ett ekte album i databasen."
+              />
+            )}
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-4">
-        {gallery.map(({ album, images }) => (
+        {gallery.length ? gallery.map(({ album, images }) => (
           <Card key={album.id}>
             <CardHeader>
               <CardTitle>{album.title}</CardTitle>
@@ -117,7 +134,12 @@ export default async function AdminGalleryPage() {
               ))}
             </CardContent>
           </Card>
-        ))}
+        )) : (
+          <EmptyState
+            title="Ingen album ennå"
+            description="Opprett ditt første album for å bygge opp bildearkivet."
+          />
+        )}
       </div>
     </div>
   );
