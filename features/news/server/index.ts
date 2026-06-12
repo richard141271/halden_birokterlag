@@ -25,10 +25,11 @@ const defaultNews: NewsRecord[] = [
   {
     id: "news-1",
     site_key: "default",
-    slug: "velkommen-til-kias-cms",
-    title: "Velkommen til LEK-Systemet™ CMS",
-    summary: "Et moderne og gjenbrukbart utgangspunkt for publisering.",
-    body: "Denne nyheten viser hvordan LEK-Systemet™ CMS kan presentere publisert innhold på tvers av flere nettsteder senere.",
+    slug: "velkommen-til-halden-birokterlag",
+    title: "Velkommen til Halden Birøkterlags nye nettside",
+    summary:
+      "Nettsiden er oppgradert for å gjøre informasjon, arrangementer og dokumenter enklere tilgjengelig for medlemmene.",
+    body: "Her finner du nyheter, arrangementer, dokumenter og oppdatert informasjon fra laget.",
     author_name: "Admin",
     published_at: new Date().toISOString(),
     cover_image_url: null,

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { deleteEvent, getAdminEvents } from "@/features/events/server";
 
@@ -17,9 +16,12 @@ export default async function AdminEventsPage() {
             Opprett, rediger og slett arrangementer.
           </p>
         </div>
-        <Button asChild className="bg-slate-950 text-white hover:bg-slate-800">
-          <Link href="/admin/events/new">Nytt arrangement</Link>
-        </Button>
+        <Link
+          href="/admin/events/new"
+          className="inline-flex h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+        >
+          Nytt arrangement
+        </Link>
       </div>
 
       <div className="grid gap-4">
@@ -31,19 +33,20 @@ export default async function AdminEventsPage() {
             <CardContent className="flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
               <p>{item.location}</p>
               <div className="flex gap-2">
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+                <Link
+                  href={`/admin/events/${item.id}`}
+                  className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
                 >
-                  <Link href={`/admin/events/${item.id}`}>Rediger</Link>
-                </Button>
+                  Rediger
+                </Link>
                 <form action={deleteEvent}>
                   <input type="hidden" name="id" value={item.id} />
-                  <Button type="submit" variant="destructive" size="sm">
+                  <button
+                    type="submit"
+                    className="inline-flex h-9 items-center justify-center rounded-lg bg-red-600 px-3 text-sm font-semibold text-white transition hover:bg-red-500"
+                  >
                     Slett
-                  </Button>
+                  </button>
                 </form>
               </div>
             </CardContent>

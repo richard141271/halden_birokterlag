@@ -1,16 +1,16 @@
 import Link from "next/link";
 
-export function SiteFooter() {
+import { getPublicSettings } from "@/features/settings/server";
+
+export async function SiteFooter() {
   const year = new Date().getFullYear();
+  const settings = await getPublicSettings();
 
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-slate-500 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <p>
-            LEK-Systemet™ CMS er laget for gjenbrukbare organisasjonsnettsteder
-            med Supabase som datalag.
-          </p>
+          {settings.footer_tagline ? <p>{settings.footer_tagline}</p> : <div />}
           <div className="flex gap-4">
             <Link href="/kontakt">Kontakt</Link>
             <Link href="/admin">Admin</Link>

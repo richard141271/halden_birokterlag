@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PageHero } from "@/components/layout/page-hero";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -22,39 +21,53 @@ export default async function HomePage() {
     getPublicSettings(),
   ]);
 
+  const homepageCards = [
+    {
+      title: settings.homepage_card_1_title,
+      body: settings.homepage_card_1_body,
+    },
+    {
+      title: settings.homepage_card_2_title,
+      body: settings.homepage_card_2_body,
+    },
+    {
+      title: settings.homepage_card_3_title,
+      body: settings.homepage_card_3_body,
+    },
+  ].filter((item) => item.title || item.body);
+
   return (
     <>
       <PageHero
-        eyebrow="MVP"
         title={settings.site_name || page.title}
         description={page.excerpt || page.body}
       />
 
-      <section className="grid gap-6 lg:grid-cols-3">
-        {[
-          "Modulbasert arkitektur",
-          "Supabase for data og media",
-          "Multisite-klar struktur",
-        ].map((item) => (
-          <Card key={item}>
-            <CardHeader>
-              <CardTitle>{item}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-600">
-              LEK-Systemet™ CMS er laget for å kunne gjenbrukes på mange
-              nettsteder med minimale kodeendringer.
-            </CardContent>
-          </Card>
-        ))}
-      </section>
+      {homepageCards.length ? (
+        <section className="grid gap-6 lg:grid-cols-3">
+          {homepageCards.map((item) => (
+            <Card key={item.title || item.body}>
+              <CardHeader>
+                <CardTitle>{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-slate-600">
+                {item.body}
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      ) : null}
 
       <section className="grid gap-10 lg:grid-cols-2">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold text-slate-950">Nyheter</h2>
-            <Button asChild variant="ghost">
-              <Link href="/nyheter">Se alle</Link>
-            </Button>
+            <Link
+              href="/nyheter"
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50"
+            >
+              Se alle
+            </Link>
           </div>
           <div className="grid gap-4">
             {news.slice(0, 2).map((item) => (
@@ -68,9 +81,12 @@ export default async function HomePage() {
             <h2 className="text-2xl font-semibold text-slate-950">
               Arrangementer
             </h2>
-            <Button asChild variant="ghost">
-              <Link href="/arrangementer">Se alle</Link>
-            </Button>
+            <Link
+              href="/arrangementer"
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50"
+            >
+              Se alle
+            </Link>
           </div>
           <div className="grid gap-4">
             {events.slice(0, 2).map((item) => (

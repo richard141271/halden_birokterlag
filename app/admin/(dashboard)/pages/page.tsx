@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getEditablePages } from "@/features/pages/server";
 
@@ -22,14 +21,12 @@ export default async function AdminPagesPage() {
             </CardHeader>
             <CardContent className="flex items-center justify-between text-sm text-slate-600">
               <p>Slug: /{page.slug === "forside" ? "" : page.slug}</p>
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+              <Link
+                href={`/admin/pages/${page.id}`}
+                className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
               >
-                <Link href={`/admin/pages/${page.id}`}>Rediger</Link>
-              </Button>
+                Rediger
+              </Link>
             </CardContent>
           </Card>
         ))}

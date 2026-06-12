@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
+import { getPublicSettings } from "@/features/settings/server";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "LEK-Systemet™ CMS",
-  description:
-    "Modulært og gjenbrukbart CMS bygget med Next.js, Supabase og Vercel.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getPublicSettings();
+
+  return {
+    title: settings.site_name || "Halden Birøkterlag",
+    description:
+      "Nyheter, arrangementer, dokumenter og informasjon fra nettstedet.",
+  };
+}
 
 export default function RootLayout({
   children,

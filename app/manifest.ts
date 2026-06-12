@@ -1,10 +1,13 @@
 import type { MetadataRoute } from "next";
+import { getPublicSettings } from "@/features/settings/server";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const settings = await getPublicSettings();
+
   return {
-    name: "LEK-Systemet™ CMS",
-    short_name: "LEK",
-    description: "Modulært CMS med Next.js, Supabase og Vercel.",
+    name: settings.site_name || "Halden Birøkterlag",
+    short_name: settings.site_name || "Halden",
+    description: "Nyheter, arrangementer, dokumenter og informasjon.",
     start_url: "/",
     display: "standalone",
     background_color: "#f6f7fb",

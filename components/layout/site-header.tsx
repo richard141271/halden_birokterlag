@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentSite } from "@/lib/cms/site-context";
-import { Button } from "@/components/ui/button";
+import { getPublicSettings } from "@/features/settings/server";
 
 const links = [
   { href: "/", label: "Forside" },
@@ -12,17 +12,17 @@ const links = [
   { href: "/galleri", label: "Galleri" },
 ];
 
-export function SiteHeader() {
+export async function SiteHeader() {
   const site = getCurrentSite();
+  const settings = await getPublicSettings();
 
   return (
     <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
         <div>
           <Link href="/" className="text-lg font-semibold text-slate-950">
-            {site.name}
+            {settings.site_name || site.name}
           </Link>
-          <p className="text-sm text-slate-500">LEK-Systemet™ CMS</p>
         </div>
         <nav className="hidden items-center gap-5 text-sm text-slate-600 lg:flex">
           {links.map((link) => (
@@ -35,9 +35,12 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <Button asChild size="sm">
-          <Link href="/admin">Admin</Link>
-        </Button>
+        <Link
+          href="/admin"
+          className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+        >
+          Admin
+        </Link>
       </div>
     </header>
   );
