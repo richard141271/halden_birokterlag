@@ -110,3 +110,29 @@ export async function uploadDocument(formData: FormData) {
   revalidatePath("/admin/documents");
   redirect("/admin/documents");
 }
+
+export async function deleteDocument(formData: FormData) {
+  const id = String(formData.get("id") || "");
+  const bucket = String(formData.get("bucket") || "");
+  const storagePath = String(formData.get("storage_path") || "");
+  const client = getSupabaseServerClientOrThrow();
+
+  if (!isUuid(id)) {
+    throw new Error("Kunne ikke slette dokument med ugyldig ID.");
+  }
+
+  if (bucket && storagePath) {
+    const { error: storageError } = await client.storage
+      .from(bucket)
+      .remove([storagePath]);
+
+    assertSupabaseWrite(storageError, "Kunne ikke slette fil fra storage");
+  }
+
+  const { error } = await client.from("documents").delete().eq("id", id);
+  assertSupabaseWrite(error, "Kunne ikke slette dokument");
+
+  revalidatePath("/dokumenter");
+  revalidatePath("/admin/documents");
+  redirect("/admin/documents");
+}

@@ -3,7 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { getAdminDocuments, uploadDocument } from "@/features/documents/server";
+import {
+  deleteDocument,
+  getAdminDocuments,
+  uploadDocument,
+} from "@/features/documents/server";
 
 export default async function AdminDocumentsPage() {
   const documents = await getAdminDocuments();
@@ -59,13 +63,27 @@ export default async function AdminDocumentsPage() {
               <p>
                 {doc.folder_path} · {doc.file_name}
               </p>
-              <a
-                href={doc.publicUrl || "#"}
-                target="_blank"
-                className="font-medium text-slate-900"
-              >
-                Åpne
-              </a>
+              <div className="flex items-center gap-3">
+                <a
+                  href={doc.publicUrl || "#"}
+                  target="_blank"
+                  className="font-medium text-slate-900"
+                >
+                  Åpne
+                </a>
+                <form action={deleteDocument}>
+                  <input type="hidden" name="id" value={doc.id} />
+                  <input type="hidden" name="bucket" value={doc.bucket} />
+                  <input
+                    type="hidden"
+                    name="storage_path"
+                    value={doc.storage_path}
+                  />
+                  <Button type="submit" variant="destructive" size="sm">
+                    Slett
+                  </Button>
+                </form>
+              </div>
             </CardContent>
           </Card>
         ))}
