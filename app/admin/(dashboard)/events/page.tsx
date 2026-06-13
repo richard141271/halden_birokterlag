@@ -18,7 +18,8 @@ export default async function AdminEventsPage() {
         </div>
         <Link
           href="/admin/events/new"
-          className="inline-flex h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+          className="force-white-text inline-flex h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 text-sm font-semibold shadow-sm transition hover:bg-slate-800"
+          style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}
         >
           Nytt arrangement
         </Link>
@@ -43,7 +44,8 @@ export default async function AdminEventsPage() {
                   <input type="hidden" name="id" value={item.id} />
                   <button
                     type="submit"
-                    className="inline-flex h-9 items-center justify-center rounded-lg bg-red-600 px-3 text-sm font-semibold text-white transition hover:bg-red-500"
+                    className="force-white-text inline-flex h-9 items-center justify-center rounded-lg bg-red-600 px-3 text-sm font-semibold transition hover:bg-red-500"
+                    style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}
                   >
                     Slett
                   </button>

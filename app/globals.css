@@ -56,3 +56,13 @@ img {
 .prose h3 {
   margin: 1.5rem 0 0.75rem;
 }
+
+.force-white-text {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.force-slate-text {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}

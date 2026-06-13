@@ -37,7 +37,8 @@ export async function SiteHeader() {
         </nav>
         <Link
           href="/admin"
-          className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+          className="force-white-text inline-flex h-9 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold shadow-sm transition hover:bg-slate-800"
+          style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}
         >
           Admin
         </Link>

@@ -46,7 +46,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <Button
               type="submit"
               variant="outline"
-              className="w-full border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              className="force-white-text w-full border-white/20 bg-transparent hover:bg-white/10 hover:text-white"
+              style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}
             >
               Logg ut
             </Button>
