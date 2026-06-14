@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { getCurrentSite } from "@/lib/cms/site-context";
+import { getCurrentOrganization, getCurrentSite } from "@/lib/cms/site-context";
 import { getPublicSettings } from "@/features/settings/server";
 
 const links = [
@@ -13,15 +14,25 @@ const links = [
 ];
 
 export async function SiteHeader() {
-  const site = getCurrentSite();
+  const site = await getCurrentSite();
+  const organization = await getCurrentOrganization();
   const settings = await getPublicSettings();
 
   return (
     <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
-        <div>
+        <div className="flex items-center gap-3">
+          {organization.logo_url ? (
+            <Image
+              src={organization.logo_url}
+              alt={organization.name}
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-lg object-contain"
+            />
+          ) : null}
           <Link href="/" className="text-lg font-semibold text-slate-950">
-            {settings.site_name || site.name}
+            {settings.site_name || organization.header_name || site.name}
           </Link>
         </div>
         <nav className="hidden items-center gap-5 text-sm text-slate-600 lg:flex">

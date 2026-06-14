@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getCurrentSiteKey } from "@/lib/cms/site-context";
+import { getAdminSession } from "@/lib/auth/session";
+import { getCurrentOrganizationId } from "@/lib/cms/site-context";
 import {
   assertSupabaseWrite,
   getSupabaseServerClient,
@@ -13,6 +14,7 @@ import { buildStoragePublicUrl } from "@/lib/supabase/storage";
 import { isUuid, slugify } from "@/lib/utils";
 import type { DocumentRecord } from "@/types/cms";
 import { uploadFileToBucket } from "@/features/media/server";
+import { resolveOrganizationWriteTarget } from "@/features/organizations/server";
 
 const documentSchema = z.object({
   title: z.string().min(1),
@@ -24,6 +26,7 @@ const defaultDocuments: DocumentRecord[] = [
   {
     id: "doc-1",
     site_key: "default",
+    organization_id: null,
     title: "Vedtekter",
     slug: "vedtekter",
     description: "Eksempeldokument i dokumentarkivet.",
@@ -41,7 +44,7 @@ const defaultDocuments: DocumentRecord[] = [
 
 export async function getPublishedDocuments() {
   const client = getSupabaseServerClient();
-  const siteKey = getCurrentSiteKey();
+  const organizationId = await getCurrentOrganizationId();
 
   if (!client) {
     return defaultDocuments;
@@ -50,7 +53,7 @@ export async function getPublishedDocuments() {
   const { data } = await client
     .from("documents")
     .select("*")
-    .eq("site_key", siteKey)
+    .eq("organization_id", organizationId)
     .eq("is_published", true)
     .order("folder_path", { ascending: true });
 
@@ -59,7 +62,35 @@ export async function getPublishedDocuments() {
 }
 
 export async function getAdminDocuments() {
-  const docs = await getPublishedDocuments();
+  const client = getSupabaseServerClient();
+  const session = await getAdminSession();
+  const organizationId = await getCurrentOrganizationId();
+
+  if (!client) {
+    return defaultDocuments.map((doc) => ({
+      ...doc,
+      publicUrl: isUuid(doc.id) ? buildStoragePublicUrl(doc.bucket, doc.storage_path) : "",
+    }));
+  }
+
+  let query = client
+    .from("documents")
+    .select("*, organization:organizations(name, slug)")
+    .order("folder_path", { ascending: true });
+
+  if (session?.role !== "superadmin") {
+    query = query.eq("organization_id", organizationId);
+  }
+
+  const { data } = await query;
+  const docs =
+    ((data as Array<
+      DocumentRecord & { organization?: { name?: string | null; slug?: string | null } | null }
+    > | null) ?? []).map((doc) => ({
+      ...doc,
+      organization_name: doc.organization?.name ?? null,
+      organization_slug: doc.organization?.slug ?? null,
+    }));
 
   return docs.map((doc) => ({
     ...doc,
@@ -78,18 +109,23 @@ export async function uploadDocument(formData: FormData) {
 
   const file = formData.get("file");
   const client = getSupabaseServerClientOrThrow();
+  const { organizationId, siteKey } = await resolveOrganizationWriteTarget(
+    String(formData.get("organization_id") || ""),
+  );
 
   if (file instanceof File && file.size > 0) {
     const uploaded = await uploadFileToBucket({
       bucket: "documents",
       folder: "documents",
       file,
+      siteKey,
     });
 
     if (uploaded) {
       const { error } = await client.from("documents").insert({
         id: crypto.randomUUID(),
-        site_key: getCurrentSiteKey(),
+        site_key: siteKey,
+        organization_id: organizationId,
         title: parsed.title,
         slug: slugify(parsed.title),
         description: parsed.description || null,
@@ -116,6 +152,8 @@ export async function deleteDocument(formData: FormData) {
   const bucket = String(formData.get("bucket") || "");
   const storagePath = String(formData.get("storage_path") || "");
   const client = getSupabaseServerClientOrThrow();
+  const session = await getAdminSession();
+  const organizationId = await getCurrentOrganizationId();
 
   if (!isUuid(id)) {
     throw new Error("Kunne ikke slette dokument med ugyldig ID.");
@@ -129,7 +167,12 @@ export async function deleteDocument(formData: FormData) {
     assertSupabaseWrite(storageError, "Kunne ikke slette fil fra storage");
   }
 
-  const { error } = await client.from("documents").delete().eq("id", id);
+  let query = client.from("documents").delete().eq("id", id);
+  if (session?.role !== "superadmin") {
+    query = query.eq("organization_id", organizationId);
+  }
+
+  const { error } = await query;
   assertSupabaseWrite(error, "Kunne ikke slette dokument");
 
   revalidatePath("/dokumenter");

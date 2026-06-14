@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getCurrentSiteKey } from "@/lib/cms/site-context";
+import { getAdminSession } from "@/lib/auth/session";
+import { getCurrentOrganizationId } from "@/lib/cms/site-context";
+import { resolveOrganizationWriteTarget } from "@/features/organizations/server";
 import {
   assertSupabaseWrite,
   getSupabaseServerClient,
@@ -25,6 +27,7 @@ const defaultNews: NewsRecord[] = [
   {
     id: "news-1",
     site_key: "default",
+    organization_id: null,
     slug: "velkommen-til-halden-birokterlag",
     title: "Velkommen til Halden Birøkterlags nye nettside",
     summary:
@@ -41,7 +44,7 @@ const defaultNews: NewsRecord[] = [
 
 export async function getPublishedNews() {
   const client = getSupabaseServerClient();
-  const siteKey = getCurrentSiteKey();
+  const organizationId = await getCurrentOrganizationId();
 
   if (!client) {
     return defaultNews;
@@ -50,7 +53,7 @@ export async function getPublishedNews() {
   const { data } = await client
     .from("news")
     .select("*")
-    .eq("site_key", siteKey)
+    .eq("organization_id", organizationId)
     .eq("is_published", true)
     .order("published_at", { ascending: false });
 
@@ -65,19 +68,32 @@ export async function getNewsBySlug(slug: string) {
 
 export async function getAdminNews() {
   const client = getSupabaseServerClient();
-  const siteKey = getCurrentSiteKey();
+  const session = await getAdminSession();
+  const organizationId = await getCurrentOrganizationId();
 
   if (!client) {
     return defaultNews;
   }
 
-  const { data } = await client
+  let query = client
     .from("news")
-    .select("*")
-    .eq("site_key", siteKey)
+    .select("*, organization:organizations(name, slug)")
     .order("created_at", { ascending: false });
 
-  const rows = (data as NewsRecord[] | null) ?? [];
+  if (session?.role !== "superadmin") {
+    query = query.eq("organization_id", organizationId);
+  }
+
+  const { data } = await query;
+
+  const rows =
+    ((data as Array<
+      NewsRecord & { organization?: { name?: string | null; slug?: string | null } | null }
+    > | null) ?? []).map((item) => ({
+      ...item,
+      organization_name: item.organization?.name ?? null,
+      organization_slug: item.organization?.slug ?? null,
+    }));
   return rows.length ? rows : defaultNews;
 }
 
@@ -97,11 +113,14 @@ export async function saveNews(formData: FormData) {
   });
 
   const client = getSupabaseServerClientOrThrow();
-  const siteKey = getCurrentSiteKey();
+  const { organizationId, siteKey } = await resolveOrganizationWriteTarget(
+    String(formData.get("organization_id") || ""),
+  );
   const id = isUuid(parsed.id || "") ? parsed.id : crypto.randomUUID();
   const { error } = await client.from("news").upsert({
     id,
     site_key: siteKey,
+    organization_id: organizationId,
     slug: slugify(parsed.title),
     title: parsed.title,
     summary: parsed.summary || null,
@@ -121,11 +140,20 @@ export async function saveNews(formData: FormData) {
 export async function deleteNews(formData: FormData) {
   const id = String(formData.get("id") || "");
   const client = getSupabaseServerClientOrThrow();
+  const session = await getAdminSession();
+  const organizationId = await getCurrentOrganizationId();
 
-  if (id) {
-    const { error } = await client.from("news").delete().eq("id", id);
-    assertSupabaseWrite(error, "Kunne ikke slette nyhet");
+  if (!isUuid(id)) {
+    throw new Error("Kunne ikke slette nyhet med ugyldig ID.");
   }
+
+  let query = client.from("news").delete().eq("id", id);
+  if (session?.role !== "superadmin") {
+    query = query.eq("organization_id", organizationId);
+  }
+
+  const { error } = await query;
+  assertSupabaseWrite(error, "Kunne ikke slette nyhet");
 
   revalidatePath("/nyheter");
   revalidatePath("/admin/news");

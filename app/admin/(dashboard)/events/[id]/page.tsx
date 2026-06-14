@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { OrganizationField } from "@/components/admin/organization-field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ export default async function AdminEditEventPage({
       <CardContent>
         <form action={saveEvent} className="space-y-4">
           <input type="hidden" name="id" value={item.id} />
+          <OrganizationField value={item.organization_id} />
           <div className="space-y-2">
             <Label htmlFor="title">Tittel</Label>
             <Input id="title" name="title" defaultValue={item.title} />

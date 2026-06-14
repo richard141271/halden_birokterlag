@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getCurrentSiteKey } from "@/lib/cms/site-context";
+import { getCurrentOrganizationId } from "@/lib/cms/site-context";
+import { resolveOrganizationWriteTarget } from "@/features/organizations/server";
 import {
   assertSupabaseWrite,
   getSupabaseServerClient,
@@ -27,6 +28,7 @@ const defaultPages: PageRecord[] = [
   {
     id: "page-home",
     site_key: "default",
+    organization_id: null,
     slug: "forside",
     title: "Forside",
     page_type: "static",
@@ -44,6 +46,7 @@ const defaultPages: PageRecord[] = [
   {
     id: "page-about",
     site_key: "default",
+    organization_id: null,
     slug: "om-oss",
     title: "Om oss",
     page_type: "static",
@@ -61,6 +64,7 @@ const defaultPages: PageRecord[] = [
   {
     id: "page-contact",
     site_key: "default",
+    organization_id: null,
     slug: "kontakt",
     title: "Kontakt",
     page_type: "static",
@@ -99,7 +103,8 @@ function mergePagesWithDefaults(rows: PageRecord[], siteKey: string) {
 
 export async function getPublicPages() {
   const client = getSupabaseServerClient();
-  const siteKey = getCurrentSiteKey();
+  const organizationId = await getCurrentOrganizationId();
+  const siteKey = await resolveOrganizationWriteTarget().then((target) => target.siteKey);
 
   if (!client) {
     return getDefaultPages(siteKey);
@@ -108,7 +113,7 @@ export async function getPublicPages() {
   const { data } = await client
     .from("pages")
     .select("*")
-    .eq("site_key", siteKey)
+    .eq("organization_id", organizationId)
     .eq("is_published", true)
     .order("nav_order", { ascending: true });
 
@@ -128,7 +133,8 @@ export async function getPageBySlug(slug: string) {
 
 export async function getEditablePages() {
   const client = getSupabaseServerClient();
-  const siteKey = getCurrentSiteKey();
+  const organizationId = await getCurrentOrganizationId();
+  const siteKey = await resolveOrganizationWriteTarget().then((target) => target.siteKey);
 
   if (!client) {
     return getDefaultPages(siteKey);
@@ -137,7 +143,7 @@ export async function getEditablePages() {
   const { data } = await client
     .from("pages")
     .select("*")
-    .eq("site_key", siteKey)
+    .eq("organization_id", organizationId)
     .order("nav_order", { ascending: true });
 
   const rows = (data as PageRecord[] | null) ?? [];
@@ -162,7 +168,9 @@ export async function savePage(formData: FormData) {
   });
 
   const client = getSupabaseServerClientOrThrow();
-  const siteKey = getCurrentSiteKey();
+  const { organizationId, siteKey } = await resolveOrganizationWriteTarget(
+    String(formData.get("organization_id") || ""),
+  );
   const defaultPage = getDefaultPages(siteKey).find(
     (page) => page.slug === parsed.slug,
   );
@@ -172,7 +180,7 @@ export async function savePage(formData: FormData) {
     const { data } = await client
       .from("pages")
       .select("id")
-      .eq("site_key", siteKey)
+      .eq("organization_id", organizationId)
       .eq("slug", parsed.slug)
       .maybeSingle();
 
@@ -182,6 +190,7 @@ export async function savePage(formData: FormData) {
   const { error } = await client.from("pages").upsert({
     id,
     site_key: siteKey,
+    organization_id: organizationId,
     slug: parsed.slug,
     title: parsed.title,
     page_type: "static",

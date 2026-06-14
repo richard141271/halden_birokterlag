@@ -1,6 +1,5 @@
 "use server";
 
-import { getCurrentSiteKey } from "@/lib/cms/site-context";
 import {
   assertSupabaseWrite,
   getSupabaseServerClient,
@@ -11,12 +10,14 @@ type UploadOptions = {
   bucket: string;
   folder: string;
   file: File;
+  siteKey?: string;
 };
 
 export async function uploadFileToBucket({
   bucket,
   folder,
   file,
+  siteKey,
 }: UploadOptions) {
   const client = getSupabaseServerClientOrThrow();
 
@@ -24,10 +25,10 @@ export async function uploadFileToBucket({
     return null;
   }
 
-  const siteKey = getCurrentSiteKey();
+  const resolvedSiteKey = siteKey || "default";
   const extension = file.name.split(".").pop() || "bin";
   const fileName = `${crypto.randomUUID()}.${extension}`;
-  const storagePath = `${siteKey}/${folder}/${fileName}`;
+  const storagePath = `${resolvedSiteKey}/${folder}/${fileName}`;
   const bytes = Buffer.from(await file.arrayBuffer());
 
   const { error } = await client.storage.from(bucket).upload(storagePath, bytes, {

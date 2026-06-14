@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentSiteKey } from "@/lib/cms/site-context";
+import { getCurrentOrganizationId } from "@/lib/cms/site-context";
+import { resolveOrganizationWriteTarget } from "@/features/organizations/server";
 import {
   assertSupabaseWrite,
   getSupabaseServerClient,
@@ -31,7 +32,7 @@ const defaultSettings = {
 
 export async function getPublicSettings() {
   const client = getSupabaseServerClient();
-  const siteKey = getCurrentSiteKey();
+  const organizationId = await getCurrentOrganizationId();
 
   if (!client) {
     return defaultSettings;
@@ -40,7 +41,7 @@ export async function getPublicSettings() {
   const { data } = await client
     .from("settings")
     .select("*")
-    .eq("site_key", siteKey)
+    .eq("organization_id", organizationId)
     .eq("is_public", true);
 
   if (!data?.length) {
@@ -59,7 +60,9 @@ export async function getAdminSettings() {
 
 export async function saveSettings(formData: FormData) {
   const client = getSupabaseServerClientOrThrow();
-  const siteKey = getCurrentSiteKey();
+  const { organizationId, siteKey } = await resolveOrganizationWriteTarget(
+    String(formData.get("organization_id") || ""),
+  );
   const entries = [
     "site_name",
     "logo",
@@ -84,6 +87,7 @@ export async function saveSettings(formData: FormData) {
     entries.map((key) =>
       client.from("settings").upsert(
         {
+          organization_id: organizationId,
           site_key: siteKey,
           key,
           value: String(formData.get(key) || ""),
@@ -93,7 +97,7 @@ export async function saveSettings(formData: FormData) {
           is_public: true,
         },
         {
-          onConflict: "site_key,key",
+          onConflict: "organization_id,key",
         },
       ),
     ),

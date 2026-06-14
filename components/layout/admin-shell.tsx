@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { clearAdminSession } from "@/lib/auth/session";
+import { getAdminSession } from "@/lib/auth/session";
+import { getCurrentOrganization } from "@/lib/cms/site-context";
 import { Button } from "@/components/ui/button";
 
 const nav = [
@@ -13,7 +15,14 @@ const nav = [
   { href: "/admin/settings", label: "Innstillinger" },
 ];
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+export async function AdminShell({ children }: { children: React.ReactNode }) {
+  const session = await getAdminSession();
+  const organization = await getCurrentOrganization();
+  const items =
+    session?.role === "superadmin"
+      ? [...nav, { href: "/admin/organizations", label: "Organisasjoner" }]
+      : nav;
+
   async function logout() {
     "use server";
 
@@ -27,12 +36,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <aside className="rounded-3xl bg-slate-950 p-5 text-white">
           <div className="mb-8">
             <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-              LEK-Systemet™ CMS
+              {session?.role === "superadmin"
+                ? "LEK-Systemet™ CMS"
+                : organization.admin_panel_name || `${organization.name} CMS`}
             </p>
             <h2 className="mt-2 text-2xl font-semibold">Admin</h2>
           </div>
           <nav className="space-y-1">
-            {nav.map((item) => (
+            {items.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -42,6 +53,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </nav>
+          <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
+            {session?.displayName || session?.username || "Admin"}
+            <br />
+            {session?.role === "superadmin" ? "Superadmin" : "Organisasjonsadmin"}
+          </div>
           <form action={logout} className="mt-8">
             <Button
               type="submit"

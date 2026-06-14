@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { OrganizationField } from "@/components/admin/organization-field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,14 @@ export default async function AdminSettingsPage() {
 
   return (
     <form action={saveSettings} className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Organisasjon</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <OrganizationField />
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Globale innstillinger</CardTitle>

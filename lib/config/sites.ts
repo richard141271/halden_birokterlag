@@ -11,6 +11,18 @@ export const siteRegistry = {
     description:
       "Et modulært CMS bygget for enkel publisering og administrasjon.",
   },
+  fredrikstad: {
+    key: "fredrikstad",
+    name: "Fredrikstad Birøkterlag",
+    description:
+      "Et modulært CMS bygget for enkel publisering og administrasjon.",
+  },
+  sarpsborg: {
+    key: "sarpsborg",
+    name: "Sarpsborg Birøkterlag",
+    description:
+      "Et modulært CMS bygget for enkel publisering og administrasjon.",
+  },
 } as const;
 
 export type SiteRegistryKey = keyof typeof siteRegistry;

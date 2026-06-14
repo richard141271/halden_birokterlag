@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getCurrentSiteKey } from "@/lib/cms/site-context";
+import { getAdminSession } from "@/lib/auth/session";
+import { getCurrentOrganizationId } from "@/lib/cms/site-context";
+import { resolveOrganizationWriteTarget } from "@/features/organizations/server";
 import {
   assertSupabaseWrite,
   getSupabaseServerClient,
@@ -28,6 +30,7 @@ const defaultEvents: EventRecord[] = [
   {
     id: "event-1",
     site_key: "default",
+    organization_id: null,
     slug: "biroktkurs-for-nybegynnere",
     title: "Birøktkurs for nybegynnere",
     summary: "Introduksjonskurs for nye birøktere med praktisk og enkel gjennomgang.",
@@ -46,7 +49,7 @@ const defaultEvents: EventRecord[] = [
 
 export async function getPublishedEvents() {
   const client = getSupabaseServerClient();
-  const siteKey = getCurrentSiteKey();
+  const organizationId = await getCurrentOrganizationId();
 
   if (!client) {
     return defaultEvents;
@@ -55,7 +58,7 @@ export async function getPublishedEvents() {
   const { data } = await client
     .from("events")
     .select("*")
-    .eq("site_key", siteKey)
+    .eq("organization_id", organizationId)
     .eq("is_published", true)
     .order("starts_at", { ascending: true });
 
@@ -70,19 +73,32 @@ export async function getEventBySlug(slug: string) {
 
 export async function getAdminEvents() {
   const client = getSupabaseServerClient();
-  const siteKey = getCurrentSiteKey();
+  const session = await getAdminSession();
+  const organizationId = await getCurrentOrganizationId();
 
   if (!client) {
     return defaultEvents;
   }
 
-  const { data } = await client
+  let query = client
     .from("events")
-    .select("*")
-    .eq("site_key", siteKey)
+    .select("*, organization:organizations(name, slug)")
     .order("starts_at", { ascending: true });
 
-  const rows = (data as EventRecord[] | null) ?? [];
+  if (session?.role !== "superadmin") {
+    query = query.eq("organization_id", organizationId);
+  }
+
+  const { data } = await query;
+
+  const rows =
+    ((data as Array<
+      EventRecord & { organization?: { name?: string | null; slug?: string | null } | null }
+    > | null) ?? []).map((item) => ({
+      ...item,
+      organization_name: item.organization?.name ?? null,
+      organization_slug: item.organization?.slug ?? null,
+    }));
   return rows.length ? rows : defaultEvents;
 }
 
@@ -105,11 +121,14 @@ export async function saveEvent(formData: FormData) {
   });
 
   const client = getSupabaseServerClientOrThrow();
-  const siteKey = getCurrentSiteKey();
+  const { organizationId, siteKey } = await resolveOrganizationWriteTarget(
+    String(formData.get("organization_id") || ""),
+  );
   const id = isUuid(parsed.id || "") ? parsed.id : crypto.randomUUID();
   const { error } = await client.from("events").upsert({
     id,
     site_key: siteKey,
+    organization_id: organizationId,
     slug: slugify(parsed.title),
     title: parsed.title,
     summary: parsed.summary || null,
@@ -132,11 +151,20 @@ export async function saveEvent(formData: FormData) {
 export async function deleteEvent(formData: FormData) {
   const id = String(formData.get("id") || "");
   const client = getSupabaseServerClientOrThrow();
+  const session = await getAdminSession();
+  const organizationId = await getCurrentOrganizationId();
 
-  if (id) {
-    const { error } = await client.from("events").delete().eq("id", id);
-    assertSupabaseWrite(error, "Kunne ikke slette arrangement");
+  if (!isUuid(id)) {
+    throw new Error("Kunne ikke slette arrangement med ugyldig ID.");
   }
+
+  let query = client.from("events").delete().eq("id", id);
+  if (session?.role !== "superadmin") {
+    query = query.eq("organization_id", organizationId);
+  }
+
+  const { error } = await query;
+  assertSupabaseWrite(error, "Kunne ikke slette arrangement");
 
   revalidatePath("/arrangementer");
   revalidatePath("/admin/events");

@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { getCurrentOrganization } from "@/lib/cms/site-context";
 import { getPublicSettings } from "@/features/settings/server";
 
 export async function SiteFooter() {
   const year = new Date().getFullYear();
   const settings = await getPublicSettings();
+  const organization = await getCurrentOrganization();
 
   return (
     <footer className="border-t border-slate-200 bg-white">
@@ -18,6 +20,7 @@ export async function SiteFooter() {
         </div>
         <div className="flex flex-col gap-2 border-t border-slate-200 pt-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <p>
+            {organization.header_name || organization.name}.{" "}
             Nettsidesystem levert av{" "}
             <a
               href="https://aiinnovate.no"
